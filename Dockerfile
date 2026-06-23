@@ -6,7 +6,8 @@ WORKDIR /app
 # Install dependencies (this step is cached as long as the dependencies don't change)
 COPY package.json pnpm-lock.yaml ./
 
-RUN corepack enable pnpm && pnpm install
+# PERBAIKAN: Mengganti corepack enable yang bermasalah dengan instalasi pnpm via npm global
+RUN npm install -g pnpm && pnpm install
 
 # Copy the rest of your app's source code
 COPY . .
@@ -43,7 +44,8 @@ ENV WRANGLER_SEND_METRICS=false \
 RUN mkdir -p /root/.config/.wrangler && \
     echo '{"enabled":false}' > /root/.config/.wrangler/metrics.json
 
-RUN npm run build
+# PERBAIKAN: Mengubah npm run build menjadi pnpm run build agar konsisten memakai pnpm
+RUN pnpm run build
 
 CMD [ "pnpm", "run", "dockerstart"]
 
@@ -52,7 +54,7 @@ FROM base AS bolt-ai-development
 
 # Define the same environment variables for development
 ARG GROQ_API_KEY
-ARG HuggingFace 
+ARG HuggingFace_API_KEY
 ARG OPENAI_API_KEY
 ARG ANTHROPIC_API_KEY
 ARG OPEN_ROUTER_API_KEY
@@ -71,5 +73,5 @@ ENV GROQ_API_KEY=${GROQ_API_KEY} \
     VITE_LOG_LEVEL=${VITE_LOG_LEVEL} \
     DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX}
 
-RUN mkdir -p ${WORKDIR}/run
-CMD pnpm run dev --host
+RUN mkdir -p /app/run
+CMD ["pnpm", "run", "dev", "--host", "0.0.0.0"]
